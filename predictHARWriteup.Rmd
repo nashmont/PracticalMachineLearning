@@ -18,11 +18,11 @@ pml_write_files = function(x){
 
 Using devices such as Jawbone Up, Nike FuelBand, and Fitbit it is now possible to collect a large amount of data about personal activity relatively inexpensively. These type of devices are part of the quantified self movement - a group of enthusiasts who take measurements about themselves regularly to improve their health, to find patterns in their behavior, or because they are tech geeks. One thing that people regularly do is quantify how much of a particular activity they do, but they rarely quantify how well they do it. In this project, your goal will be to use data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants. They were asked to perform barbell lifts correctly and incorrectly in 5 different ways. More information is available from the website here: http://groupware.les.inf.puc-rio.br/har (see the section on the Weight Lifting Exercise Dataset). 
 
-We chall building a model using Random Forests inorder to predict the manner in which users did the exercise. This is the "classe" variable in the training set.
+We shall be building a model using Random Forests inorder to predict the manner in which users did the exercise. This is the "classe" variable in the training set.
 
-We Read the training and testing data from the respective CSV files. We also perfrom some data cleanup (Imputing) on both the datasets. Any features which contain NA values are removed effectively reducing the number of features we operate on. Further stratagies can be used but a quick exploration of such features shows a high degree of sparsity making it difficult to interpolate or estimate a suitable replacment for the NA values. The simplest approach is to remove such features. 
+We read the training and testing data from the respective CSV files. We also perfrom some data cleanup (Imputing) on both the datasets. Any features which contain NA values are removed effectively reducing the number of features we operate on. Further stratagies can be used but a quick exploration of such features shows a high degree of sparsity making it difficult to interpolate or estimate a suitable replacment for the NA values. The simplest approach is to remove such features. 
 
-We also remove the fields: {X,user_name,raw_timestamp_part_1,raw_timestamp_part_2,cvtd_timestamp,new_window","num_window}. The reson being that they do not proveide valid classification information and are conceptually uncorrelated with the class being predicted. 
+We also remove the fields: {X,user_name,raw_timestamp_part_1,raw_timestamp_part_2,cvtd_timestamp,new_window,num_window}. The reson being that they do not provide valid classification information and are conceptually uncorrelated with the class being predicted. 
 
 ```{r}
 trainData          <- read.csv("pml-training.csv", na.strings = c("NA", ""), head=TRUE)
@@ -36,7 +36,7 @@ testData_Clean     <- testData_Clean [, -InvalidFields]
 trainData_Clean    <- trainData_Clean[, -InvalidFields]
 ```
 
-We split he trainData_Clean into two sets to employ cross validation
+We split the trainData_Clean into two sets to employ cross validation
 
 ```{r}
 TIndex             <- createDataPartition(y = trainData_Clean$classe, p = 0.8, list = FALSE)
@@ -45,8 +45,9 @@ trainData_Clean_20 <- trainData_Clean[-TIndex, ]
 ```
 
 We train a Random Forest using the caret package and trainData_clean_80 as input. We aim to predict the classe feature. In order to improve the prediction error we apply the following Scheme
-  1. Pre-Processing: Various pre-processing steps were applied inclusing range, and PCA (centers and scales the data also)
-  2. Training Control: Within the caret train function we employ a K-Fold (k=5) Cross Validation Scheme choosing the final best scoring model. This is seperate from the cross-validation scheme we processed early which is used to validate the final model rather than for training it.
+
+1. Pre-Processing: Various pre-processing steps were applied including range, and PCA feature reduction (centers and scales the data also)
+2. Training Control: Within the caret train function we employ a K-Fold (k=5) Cross Validation Scheme choosing the final best scoring model. This is seperate from the cross-validation scheme we processed early which is used to validate the final model rather than for training it.
 
 ```{r}
 rfModel <- train(trainData_Clean_80$classe ~ ., 
@@ -57,7 +58,7 @@ rfModel <- train(trainData_Clean_80$classe ~ .,
 rfModel
 ```
 
-We validate the Random Forest using trainData_clean_20. We also generate an error metric based on the L1 norm:
+Using cross validation we calculate the out of sample error rate using the Random Forest prediction model on trainData_clean_20. This is done by calculating an error metric based on the L1 norm:
  
 ```{r}
 print(sum(predict(rfModel, trainData_Clean_20) == trainData_Clean_20$classe)/nrow(trainData_Clean_20))
